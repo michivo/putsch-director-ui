@@ -45,6 +45,14 @@
 			return id1 - id2;
 		} 
 
+		if(p1.playerId.match(/P\d+/)) {
+			return -1;
+		}
+
+		if(p2.playerId.match(/P\d+/)) {
+			return 1;
+		}
+
 		return p1.playerId.localeCompare(p2.playerId);
 	}
 </script>
