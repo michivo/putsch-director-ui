@@ -9,4 +9,5 @@ export interface PlayerQuestStage {
     stageIndex: number,
     questId: string,
     currentLocation: string,
+    stageCount: number,
 }

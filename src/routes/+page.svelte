@@ -1,26 +1,30 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
     	import {
 		Col,
-		Collapse,
 		Container,
 		Nav,
 		Navbar,
 		NavbarBrand,
-		NavbarToggler,
 		NavItem,
 		NavLink,
 		Row
 	} from 'sveltestrap';
+	import { cleanupPlayerStore, initPlayerStore } from '../stores/players';
 	import Players from './Players.svelte';
+	import Map from './Map.svelte';
 
     let activeTab = 'players';
 
     onMount(() => {
 		const urlParams = new URLSearchParams(window.location.search);
 		activeTab = urlParams.get('activeTab') ?? 'players';
-        console.log(activeTab);
+        initPlayerStore();
     });
+
+	onDestroy(() => {
+		cleanupPlayerStore();
+	})
 </script>
 
 <Navbar light color="light" class="py-1">
@@ -46,9 +50,9 @@
 </Navbar>
 <Container>
 	{#if activeTab === 'players'}
-    <Players></Players>
+    <Players/>
     {:else if activeTab === 'map'}
-    Die Kartenansicht ist leider noch nicht verfügbar.
+    <Map/>
     {/if}
 </Container>
 
