@@ -1,30 +1,21 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-    	import {
-		Col,
-		Container,
-		Nav,
-		Navbar,
-		NavbarBrand,
-		NavItem,
-		NavLink,
-		Row
-	} from 'sveltestrap';
+	import { Col, Container, Nav, Navbar, NavbarBrand, NavItem, NavLink, Row } from 'sveltestrap';
 	import { cleanupPlayerStore, initPlayerStore } from '../stores/players';
 	import Players from './Players.svelte';
 	import Map from './Map.svelte';
 
-    let activeTab = 'players';
+	let activeTab = 'players';
 
-    onMount(() => {
+	onMount(() => {
 		const urlParams = new URLSearchParams(window.location.search);
 		activeTab = urlParams.get('activeTab') ?? 'players';
-        initPlayerStore();
-    });
+		initPlayerStore();
+	});
 
 	onDestroy(() => {
 		cleanupPlayerStore();
-	})
+	});
 </script>
 
 <Navbar light color="light" class="py-1">
@@ -38,23 +29,29 @@
 			<Col>
 				<Nav pills class="mt-2">
 					<NavItem>
-						<NavLink on:click={() => activeTab = 'players'} active={activeTab === 'players'} href="/?activeTab=players">Spieler*innen</NavLink>
+						<NavLink
+							on:click={() => (activeTab = 'players')}
+							active={activeTab === 'players'}
+							href="/?activeTab=players">Spieler*innen</NavLink
+						>
 					</NavItem>
 					<NavItem>
-						<NavLink on:click={() => activeTab = 'map'} active={activeTab === 'map'} href="/?activeTab=map">Plan</NavLink>
+						<NavLink
+							on:click={() => (activeTab = 'map')}
+							active={activeTab === 'map'}
+							href="/?activeTab=map">Plan</NavLink
+						>
 					</NavItem>
 				</Nav>
 			</Col>
 		</Row>
 	</Container>
 </Navbar>
-<Container>
-	{#if activeTab === 'players'}
-    <Players/>
-    {:else if activeTab === 'map'}
-    <Map/>
-    {/if}
-</Container>
+{#if activeTab === 'players'}
+	<Players />
+{:else if activeTab === 'map'}
+	<Map />
+{/if}
 
 <style>
 	@font-face {
