@@ -32,7 +32,7 @@
 		return player.stageIndex;
 	}
 
-	function openResetPlayerModal(player: PlayerQuestStage) {
+	function openResetPlayerModal(player: PlayerQuestStage | undefined = undefined) {
 		playerBeingReset = player;
 		openModal();
 	}
@@ -79,24 +79,36 @@
 					<td>{getStageIndexLabel(player)}</td>
 					<td
 						><Button class="p-0" title="Zurücksetzen" on:click={() => openResetPlayerModal(player)}
-							><Icon name="person-x" class="putsch-action-button" /></Button
+							><Icon
+								style="color:var(--bs-red)"
+								name="person-x"
+								class="putsch-action-button"
+							/></Button
 						></td
 					>
 				</tr>
 			{/each}
 		</tbody>
 	</Table>
+	<Button
+		class="float-end"
+		color="danger"
+		title="Alle zurücksetzen"
+		on:click={() => openResetPlayerModal()}>Alle zurücksetzen</Button
+	>
 	<Modal isOpen={resetModalOpen}>
 		<ModalHeader>Zurücksetzen</ModalHeader>
 		<ModalBody>
 			{#if playerBeingReset}
 				Willst du Spieler*in {playerBeingReset.playerId} wirklich zurücksetzen?
+			{:else}
+				Willst du <em>alle</em> Spieler*innen zurücksetzen?
 			{/if}
 		</ModalBody>
 		<ModalFooter>
 			{#if !resetting}
-				<Button color="primary" on:click={resetCurrentPlayer}>Ja</Button>
-				<Button color="secondary" on:click={closeModal}>Nein</Button>
+				<Button color="danger" on:click={resetCurrentPlayer}>Ja</Button>
+				<Button color="info" on:click={closeModal}>Nein</Button>
 			{:else}
 				<Spinner />
 			{/if}
