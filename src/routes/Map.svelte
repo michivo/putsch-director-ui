@@ -1,12 +1,28 @@
 <script lang="ts">
-	import { afterUpdate } from 'svelte';
+	import { afterUpdate, onMount } from 'svelte';
 	import { Badge, Container } from 'sveltestrap';
 	import { players } from '../stores/players';
 	import type { PlayerQuestStage } from '../types/PlayerQuestStage';
 
+	let mapElement: HTMLElement;
+
+	onMount(() => {
+    const resizeObserver = new ResizeObserver(entries => {
+      updatePositions();
+    });
+
+    resizeObserver.observe(mapElement);
+
+    // This callback cleans up the observer
+    return () => resizeObserver.unobserve(mapElement);
+  });
+
 	afterUpdate(() => {
+		updatePositions();
+	});
+
+	function updatePositions() {
 		const badges = document.getElementsByClassName('playerBadge');
-		const map = document.getElementById('map');
 		const playerPositions: any[] = [];
 		for (const badge of badges) {
 			const id = badge.id.substring(7);
@@ -15,8 +31,8 @@
 				const location = player.currentLocation || 'unknown';
 				const badgeElement = badge as HTMLElement;
 				const badgeCoordinates = coordinates.find(c => c.locationName === location) ?? { locationName: 'unknown', top: 100, left: 0};
-				const top = Math.floor(badgeCoordinates.top * map!.getBoundingClientRect().height / 100.0);
-				let left = Math.floor(badgeCoordinates.left * map!.getBoundingClientRect().width / 100.0);
+				const top = Math.floor(badgeCoordinates.top * mapElement.getBoundingClientRect().height / 100.0);
+				let left = Math.floor(badgeCoordinates.left * mapElement.getBoundingClientRect().width / 100.0);
 				const existingPositionAssignment = playerPositions.find(e => e.locationName === badgeCoordinates.locationName);
 				if(!existingPositionAssignment) {
 					playerPositions.push({ locationName: badgeCoordinates.locationName, offset: badgeElement.getBoundingClientRect().width + 1 });
@@ -25,13 +41,11 @@
 					left += existingPositionAssignment.offset;
 					existingPositionAssignment.offset += badgeElement.getBoundingClientRect().width + 1;
 				}
-				console.log(existingPositionAssignment);
-				console.log(playerPositions);
 				badgeElement.style.top = `${top}px`;
 				badgeElement.style.left = `${left}px`;
 			}
 		}
-	});
+	}
 
 	function formatStageIndexLabel(player: PlayerQuestStage): string | number {
 		if (player.stageIndex === undefined || player.stageIndex < 0) {
@@ -106,8 +120,8 @@
 </script>
 
 <Container fluid class="w-100" style="height:calc(100vh - 70px)">
-	<div style="display:flex;position:relative;height:100%">
-		<img src="./images/plan.png" alt="Gebäudeplan" id="map" />
+	<div style="display:flex;position:relative;height:100%" on:load={() => updatePositions()} on:resize={() => updatePositions()}>
+		<img src="./images/plan.png" alt="Gebäudeplan" id="map" height="1226" width="3110" bind:this={mapElement}/>
 		{#each $players as player}
 			<Badge pill color="{player.stageIndex === -1 ? 'primary' : 'info'}" class="playerBadge" id={`player_${player.playerId}`}
 				>{player.playerId}<br><small>{player.questId + formatStageIndexLabel(player)} </small></Badge
@@ -128,6 +142,7 @@
 		position: absolute;
 		z-index: 10;
 		font-size: 1rem;
+		transition: top .5s, left .5s;
 	}
 
 	small {
