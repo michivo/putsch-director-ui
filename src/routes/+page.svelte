@@ -4,6 +4,7 @@
 	import { cleanupPlayerStore, initPlayerStore } from '../stores/players';
 	import Players from './Players.svelte';
 	import Map from './Map.svelte';
+	import Radios from './Radios.svelte';
 
 	let activeTab = 'players';
 
@@ -42,6 +43,13 @@
 							href="/?activeTab=map">Plan</NavLink
 						>
 					</NavItem>
+					<NavItem>
+						<NavLink
+							on:click={() => (activeTab = 'radios')}
+							active={activeTab === 'radios'}
+							href="/?activeTab=radios">Radios</NavLink
+						>
+					</NavItem>
 				</Nav>
 			</Col>
 		</Row>
@@ -51,6 +59,8 @@
 	<Players />
 {:else if activeTab === 'map'}
 	<Map />
+{:else if activeTab === 'radios'}
+	<Radios />
 {/if}
 
 <style>

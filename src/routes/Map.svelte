@@ -13,7 +13,6 @@
 
     resizeObserver.observe(mapElement);
 
-    // This callback cleans up the observer
     return () => resizeObserver.unobserve(mapElement);
   });
 
@@ -122,7 +121,7 @@
 <Container fluid class="w-100" style="height:calc(100vh - 70px)">
 	<div style="display:flex;position:relative;height:100%" on:load={() => updatePositions()} on:resize={() => updatePositions()}>
 		<img src="./images/plan.png" alt="Gebäudeplan" id="map" height="1226" width="3110" bind:this={mapElement}/>
-		{#each $players as player}
+		{#each $players.filter(p => p.playerId && p.playerId.startsWith('P')) as player}
 			<Badge pill color="{player.stageIndex === -1 ? 'primary' : 'info'}" class="playerBadge" id={`player_${player.playerId}`}
 				>{player.playerId}<br><small>{player.questId + formatStageIndexLabel(player)} </small></Badge
 			>

@@ -10,4 +10,5 @@ export interface PlayerQuestStage {
     questId: string,
     currentLocation: string,
     stageCount: number,
+    playlistName: string,
 }

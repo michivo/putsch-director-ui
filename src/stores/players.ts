@@ -29,6 +29,15 @@ export function cleanupPlayerStore() {
 }
 
 function comparePlayers(p1: PlayerQuestStage, p2: PlayerQuestStage) : number {
+    if(!p1.playerId && !p2.playerId) {
+        return 0;
+    }
+    if(!p1.playerId) {
+        return -1;
+    }
+    if(!p2.playerId) {
+        return 1;
+    }
     if(p1.playerId.match(/P\d+/) && p2.playerId.match(/P\d+/)) {
         const id1 = Number.parseInt(p1.playerId.substring(1));
         const id2 = Number.parseInt(p2.playerId.substring(1));

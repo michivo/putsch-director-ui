@@ -71,7 +71,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each $players as player}
+			{#each ($players.filter(p => p.playerId && p.playerId.startsWith('P'))) as player}
 				<tr>
 					<td>{player.playerId}</td>
 					<td>{player.currentLocation}</td>
