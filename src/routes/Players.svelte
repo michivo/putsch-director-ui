@@ -71,21 +71,17 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each ($players.filter(p => p.playerId && p.playerId.startsWith('P'))) as player}
+			{#each $players.filter((p) => p.playerId && p.playerId.startsWith('P')) as player}
 				<tr>
 					<td>{player.playerId}</td>
 					<td>{player.currentLocation}</td>
 					<td>{player.questId}</td>
 					<td>{getStageIndexLabel(player)}</td>
-					<td
-						><Button class="p-0" title="Zurücksetzen" on:click={() => openResetPlayerModal(player)}
-							><Icon
-								style="color:var(--bs-red)"
-								name="person-x"
-								class="putsch-action-button"
-							/></Button
-						></td
-					>
+					<td>
+						<Button class="p-0" title="Zurücksetzen" on:click={() => openResetPlayerModal(player)}>
+							<Icon style="color:var(--bs-red)" name="person-x" class="putsch-action-button" />
+						</Button>
+					</td>
 				</tr>
 			{/each}
 		</tbody>
