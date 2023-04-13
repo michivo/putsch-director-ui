@@ -5,6 +5,7 @@
 	import Players from './Players.svelte';
 	import Map from './Map.svelte';
 	import Radios from './Radios.svelte';
+	import TestEvents from './TestEvents.svelte';
 
 	let activeTab = 'players';
 
@@ -50,6 +51,13 @@
 							href="/?activeTab=radios">Radios</NavLink
 						>
 					</NavItem>
+					<NavItem>
+						<NavLink
+							on:click={() => (activeTab = 'test')}
+							active={activeTab === 'test'}
+							href="/?activeTab=test">Test</NavLink
+						>
+					</NavItem>
 				</Nav>
 			</Col>
 		</Row>
@@ -61,6 +69,8 @@
 	<Map />
 {:else if activeTab === 'radios'}
 	<Radios />
+{:else if activeTab === 'test'}
+	<TestEvents />
 {/if}
 
 <style>

@@ -9,4 +9,17 @@ async function resetPlayer(playerId: string): Promise<void> {
 	});
 }
 
-export { resetPlayer };
+async function triggerEvent(playerId: string, sensorId: string): Promise<void> {
+	const requestBody = {
+		playerId, sensorId, value: ''
+	};
+	await fetch('https://putsch-event-hub.uc.r.appspot.com/api/v1/events', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify(requestBody)
+	});
+}
+
+export { resetPlayer, triggerEvent };
