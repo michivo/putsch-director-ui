@@ -1,5 +1,5 @@
-async function resetPlayer(playerId: string): Promise<void> {
-	const requestBody = { playerId };
+async function resetPlayer(playerId: string | undefined = undefined): Promise<void> {
+	const requestBody = playerId ? { playerId } : {};
 	await fetch('https://putsch-event-hub.uc.r.appspot.com/api/v1/events/players/resetRequests', {
 		method: 'POST',
 		headers: {

@@ -1,55 +1,96 @@
 import { collection, onSnapshot, type Unsubscribe } from 'firebase/firestore';
 import { writable, type Writable } from 'svelte/store';
 import { putschFirestore } from '../tools/firebase';
-import type { PlayerQuestStage } from '../types/PlayerQuestStage';
+import type { Player, PlayerQuestStage } from '../types/PlayerQuestStage';
 
-let firestoreUnsubscribe: Unsubscribe;
+let questsUnsubscribe: Unsubscribe;
+let playersUnsubscribe: Unsubscribe;
+let currentPlayers: PlayerQuestStage[] = [];
 
 export async function initPlayerStore() {
     const docRef = collection(putschFirestore, 'playerQuests');
 
-    firestoreUnsubscribe = onSnapshot(docRef, (data) => {
-        if (data.empty) {
-            players.set([]);
-        } else {
-            const newPlayerData: PlayerQuestStage[] = [];
-            data.forEach((doc) => {
-                const item = doc.data() as PlayerQuestStage;
-                newPlayerData.push(item);
-            });
-            players.set(newPlayerData.sort(comparePlayers));
-        }
+    questsUnsubscribe = onSnapshot(docRef, (data) => {
+        const newPlayerData: PlayerQuestStage[] = [];
+        data.forEach((doc) => {
+            const item = doc.data() as PlayerQuestStage;
+            newPlayerData.push(item);
+            const currentPlayer = currentPlayers.find(p => p.playerId === item.playerId);
+            if (currentPlayer) {
+                item.questsComplete = currentPlayer.questsComplete;
+                item.feedbackCount = currentPlayer.feedbackCount;
+            }
+        });
+        currentPlayers = newPlayerData.sort(comparePlayers);
+        players.set(currentPlayers);
+    });
+
+    const playerRef = collection(putschFirestore, 'players');
+    playersUnsubscribe = onSnapshot((playerRef), (data) => {
+        const newPlayerData: PlayerQuestStage[] = [];
+        data.forEach((doc) => {
+            const item = doc.data() as Player;
+            const currentPlayer = currentPlayers.find(p => p.playerId === item.id);
+            if (currentPlayer) {
+                currentPlayer.questsComplete = item.questsComplete;
+                currentPlayer.feedbackCount = item.feedbackCount;
+                newPlayerData.push(currentPlayer);
+            }
+            else {
+                newPlayerData.push({
+                    playerId: item.id,
+                    currentLocation: item.currentLocation,
+                    questsComplete: item.questsComplete,
+                    backupTextId: '',
+                    questId: item.questActive,
+                    backupTimeSeconds: 0,
+                    feedbackCount: item.feedbackCount,
+                    name: '',
+                    playlistName: '',
+                    stageCount: 0,
+                    stageIndex: 0,
+                    text: '',
+                    triggerIds: [],
+                    triggerType: '',
+                });
+            }
+        });
+        currentPlayers = newPlayerData.sort(comparePlayers);
+        players.set(currentPlayers);
     });
 }
 
 export function cleanupPlayerStore() {
-    if(firestoreUnsubscribe) {
-        firestoreUnsubscribe();
+    if (questsUnsubscribe) {
+        questsUnsubscribe();
+    }
+    if(playersUnsubscribe) {
+        playersUnsubscribe();
     }
 }
 
-function comparePlayers(p1: PlayerQuestStage, p2: PlayerQuestStage) : number {
-    if(!p1.playerId && !p2.playerId) {
+function comparePlayers(p1: PlayerQuestStage, p2: PlayerQuestStage): number {
+    if (!p1.playerId && !p2.playerId) {
         return 0;
     }
-    if(!p1.playerId) {
+    if (!p1.playerId) {
         return -1;
     }
-    if(!p2.playerId) {
+    if (!p2.playerId) {
         return 1;
     }
-    if(p1.playerId.match(/P\d+/) && p2.playerId.match(/P\d+/)) {
+    if (p1.playerId.match(/P\d+/) && p2.playerId.match(/P\d+/)) {
         const id1 = Number.parseInt(p1.playerId.substring(1));
         const id2 = Number.parseInt(p2.playerId.substring(1));
 
         return id1 - id2;
-    } 
+    }
 
-    if(p1.playerId.match(/P\d+/)) {
+    if (p1.playerId.match(/P\d+/)) {
         return -1;
     }
 
-    if(p2.playerId.match(/P\d+/)) {
+    if (p2.playerId.match(/P\d+/)) {
         return 1;
     }
 

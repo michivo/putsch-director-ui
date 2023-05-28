@@ -11,4 +11,14 @@ export interface PlayerQuestStage {
     currentLocation: string,
     stageCount: number,
     playlistName: string,
+    questsComplete: string[],
+    feedbackCount: number,
+}
+
+export interface Player {
+    id: string,
+    currentLocation: string,
+    feedbackCount: number,
+    questsComplete: string[],
+    questActive: string,
 }
