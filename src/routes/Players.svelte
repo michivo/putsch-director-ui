@@ -167,7 +167,7 @@
 				await setCurrentStage(
 					selectedPlayers.filter((p) => p.active).map((p) => p.player.playerId),
 					questId,
-					stageId.index
+					stageId.index - 1
 				);
 			}
 		} finally {
