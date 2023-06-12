@@ -55,9 +55,49 @@ export async function initPlayerStore() {
                 });
             }
         });
+        for(const currentPlayer of currentPlayers) {
+            const newPlayer = newPlayerData.find(p => p.playerId === currentPlayer.playerId);
+            if(!newPlayer) {
+                newPlayerData.push(currentPlayer);
+            }
+        }
+        for(let playerCount = 1; playerCount <= 30; playerCount++) {
+            const playerId = `P${playerCount.toString(10).padStart(2, '0')}`;
+            const existingPlayer = currentPlayers.find(p => p.playerId === playerId);
+            if(!existingPlayer) {
+                currentPlayers.push(createDummyPlayer(playerId));
+            }
+        }
+        for(let radioCount = 1; radioCount <= 20; radioCount++) {
+            const playerId = `R${radioCount.toString(10).padStart(2, '0')}`;
+            const existingPlayer = currentPlayers.find(p => p.playerId === playerId);
+            if(!existingPlayer) {
+                currentPlayers.push(createDummyPlayer(playerId));
+            }
+        }
+
         currentPlayers = newPlayerData.sort(comparePlayers);
         players.set(currentPlayers);
     });
+}
+
+function createDummyPlayer(playerId: string) {
+    return {
+        playerId: playerId,
+        currentLocation: '',
+        questsComplete: [],
+        backupTextId: '',
+        questId: '',
+        backupTimeSeconds: 0,
+        feedbackCount: 0,
+        name: '',
+        playlistName: '',
+        stageCount: 0,
+        stageIndex: 0,
+        text: '',
+        triggerIds: [],
+        triggerType: '',
+    };
 }
 
 export function cleanupPlayerStore() {
@@ -92,6 +132,13 @@ function comparePlayers(p1: PlayerQuestStage, p2: PlayerQuestStage): number {
 
     if (p2.playerId.match(/P\d+/)) {
         return 1;
+    }
+
+    if (p1.playerId.match(/R\d+/) && p2.playerId.match(/R\d+/)) {
+        const id1 = Number.parseInt(p1.playerId.substring(1));
+        const id2 = Number.parseInt(p2.playerId.substring(1));
+
+        return id1 - id2;
     }
 
     return p1.playerId.localeCompare(p2.playerId);
