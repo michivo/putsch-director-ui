@@ -10,25 +10,26 @@
 		Spinner,
 		Table
 	} from 'sveltestrap';
-	import { resetPlayer } from '../services/eventhub';
+	import { resetPlayer, startQuestForPlayer, triggerEventsBatch } from '../services/eventhub';
 	import { players } from '../stores/players';
 	import type { PlayerQuestStage } from '../types/PlayerQuestStage';
-
-	type Selection = {
-		player: PlayerQuestStage;
-		active: boolean;
-	};
+	import type { AgentSelection } from '../types/AgentSelection';
 
 	let playerBeingReset: PlayerQuestStage | undefined = undefined;
 	let resetModalOpen = false;
 	let startQuestModalOpen = false;
 	let triggerEventModalOpen = false;
+	let setStageModalOpen = false;
+	let processing = false;
 	let resetting = false;
-	let selectedPlayers: Selection[] = [];
+	let selectedPlayers: AgentSelection[] = [];
+	let sensorId = '';
+	let questId = '';
+	let stageId = '';
 
 	players.subscribe((allPlayers) => {
 		for (const player of allPlayers) {
-			if (!selectedPlayers.find((p) => p.player.playerId === player.playerId)) {
+			if (!selectedPlayers.find((p) => p.player.playerId === player.playerId) && player.playerId && player.playerId.startsWith('P')) {
 				selectedPlayers.push({
 					player: player,
 					active: false
@@ -85,10 +86,21 @@
 
 	const closeStartQuestModal = () => {
 		startQuestModalOpen = false;
-	};	
+	};
 
-	const doStartQuest = () => {
-		startQuestModalOpen = false;
+	const doStartQuest = async () => {
+		processing = true;
+		try {
+			for (const player of selectedPlayers.filter((p) => p.active)) {
+				await startQuestForPlayer(
+					player.player.playerId,
+					questId,
+				);
+			}
+		} finally {
+			processing = false;
+			startQuestModalOpen = false;
+		}
 	};
 
 	const triggerEvent = () => {
@@ -99,8 +111,38 @@
 		triggerEventModalOpen = false;
 	};
 
-	const doTriggerEvent = () => {
-		triggerEventModalOpen = false;
+	const doTriggerEvent = async () => {
+		processing = true;
+		try {
+			await triggerEventsBatch(
+				sensorId,
+				selectedPlayers.filter((p) => p.active).map((p) => p.player.playerId)
+			);
+		} finally {
+			processing = false;
+			triggerEventModalOpen = false;
+		}
+	};
+
+	const setStage = () => {
+		setStageModalOpen = true;
+	};
+
+	const closeSetStageModal = () => {
+		setStageModalOpen = false;
+	};
+
+	const doSetStage = async () => {
+		processing = true;
+		try {
+			await triggerEventsBatch(
+				sensorId,
+				selectedPlayers.filter((p) => p.active).map((p) => p.player.playerId)
+			);
+		} finally {
+			processing = false;
+			setStageModalOpen = false;
+		}
 	};
 
 	const toggleAll = () => {
@@ -123,8 +165,8 @@
 	};
 </script>
 
-<Container>
-	<Table responsive size="sm">
+<div class="px-5">
+	<Table responsive striped size="sm">
 		<thead class="thead-dark">
 			<tr>
 				<th
@@ -135,11 +177,11 @@
 					/></th
 				>
 				<th>Sp*in</th>
-				<th>Ort</th>
+				<th class="current-location">Ort</th>
 				<th>Quest</th>
 				<th>Stage</th>
-				<th>Abgeschlossen</th>
-				<th />
+				<th class="quests-complete">Abgeschlossen</th>
+				<th>Aktion</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -155,12 +197,12 @@
 						/></td
 					>
 					<td>{player.playerId}</td>
-					<td>{player.currentLocation}</td>
+					<td class="current-location">{player.currentLocation}</td>
 					<td>{player.questId}</td>
 					<td>{getStageIndexLabel(player)}</td>
-					<td>{player.questsComplete ?? []}</td>
+					<td class="quests-complete">{player.questsComplete ?? []}</td>
 					<td>
-						<Button class="p-0" title="Zurücksetzen" on:click={() => openResetPlayerModal(player)}>
+						<Button class="p-0 m-0" title="Zurücksetzen" on:click={() => openResetPlayerModal(player)}>
 							<Icon style="color:var(--bs-red)" name="person-x" class="putsch-action-button" />
 						</Button>
 					</td>
@@ -170,21 +212,31 @@
 	</Table>
 	<div class="buttons">
 		<Button
-			class="mx-1"
+			class="mx-1 py-1"
 			color="info"
 			title="Quest starten"
-			disabled={!selectedPlayers.some((p) => p.active)}
+			disabled={!selectedPlayers.some((p) => p.active) || processing}
 			on:click={() => startQuest()}>Quest starten</Button
 		>
 		<Button
-			class="mx-1"
+			class="mx-1 py-1"
 			color="info"
 			title="Event triggern"
-			disabled={!selectedPlayers.some((p) => p.active)}
+			disabled={!selectedPlayers.some((p) => p.active) || processing}
 			on:click={() => triggerEvent()}>Event triggern</Button
-		>		
+		>
 		<Button
-			class="float-end"
+			class="mx-1 py-1"
+			color="warning"
+			title="Event triggern"
+			disabled={!selectedPlayers.some((p) => p.active) || processing}
+			on:click={() => setStage()}>Stufe setzen</Button
+		>
+		{#if processing}
+			<Spinner />
+		{/if}
+		<Button
+			class="float-end py-1"
 			color="danger"
 			title="Alle zurücksetzen"
 			on:click={() => openResetPlayerModal()}>Alle zurücksetzen</Button
@@ -211,11 +263,14 @@
 	<Modal isOpen={triggerEventModalOpen}>
 		<ModalHeader>Event triggern</ModalHeader>
 		<ModalBody>
-			TODO
+			<label
+				>Sensor-ID
+				<input bind:value={sensorId} placeholder="Sensor-ID" />
+			</label>
 		</ModalBody>
 		<ModalFooter>
-			{#if !resetting}
-				<Button color="danger" on:click={doTriggerEvent}>OK</Button>
+			{#if !processing}
+				<Button color="primary" disabled={!sensorId} on:click={doTriggerEvent}>OK</Button>
 				<Button color="info" on:click={closeTriggerEventModal}>Abbrechen</Button>
 			{:else}
 				<Spinner />
@@ -225,18 +280,42 @@
 	<Modal isOpen={startQuestModalOpen}>
 		<ModalHeader>Quest starten</ModalHeader>
 		<ModalBody>
-			TODO
+			<label
+				>Quest-ID
+				<input bind:value={questId} placeholder="Quest-ID" />
+			</label>
 		</ModalBody>
 		<ModalFooter>
-			{#if !resetting}
-				<Button color="danger" on:click={doStartQuest}>OK</Button>
+			{#if !processing}
+				<Button color="primary" disabled={!questId} on:click={doStartQuest}>OK</Button>
 				<Button color="info" on:click={closeStartQuestModal}>Abbrechen</Button>
 			{:else}
 				<Spinner />
 			{/if}
 		</ModalFooter>
-	</Modal>		
-</Container>
+	</Modal>
+	<Modal isOpen={setStageModalOpen}>
+		<ModalHeader>Stufe setzen</ModalHeader>
+		<ModalBody>
+			<label>
+				Quest-ID
+				<input bind:value={questId} placeholder="Quest-ID" />
+			</label>
+			<label>	
+				Stage-ID
+				<input bind:value={stageId} placeholder="Stage-ID" />
+			</label>
+		</ModalBody>
+		<ModalFooter>
+			{#if !processing}
+				<Button color="primary" disabled={!sensorId} on:click={doSetStage}>OK</Button>
+				<Button color="info" on:click={closeSetStageModal}>Abbrechen</Button>
+			{:else}
+				<Spinner />
+			{/if}
+		</ModalFooter>
+	</Modal>
+</div>
 
 <style>
 	th {
@@ -245,12 +324,13 @@
 		color: white;
 	}
 
-	th, td {
+	th,
+	td {
 		padding-top: 0;
 		padding-bottom: 0;
 	}
 
 	:global(.putsch-action-button) {
-		font-size: 1.25rem;
+		font-size: 1.2rem;
 	}
 </style>
