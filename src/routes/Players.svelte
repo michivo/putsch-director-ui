@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {
 		Button,
-		Container,
+		FormGroup,
 		Icon,
 		Modal,
 		ModalBody,
@@ -10,10 +10,14 @@
 		Spinner,
 		Table
 	} from 'sveltestrap';
-	import { resetPlayer, startQuestForPlayer, triggerEventsBatch } from '../services/eventhub';
+	import AutoComplete from 'simple-svelte-autocomplete';
+	import { getAllQuests, resetPlayer, startQuestForPlayer, triggerEventsBatch } from '../services/eventhub';
 	import { players } from '../stores/players';
 	import type { PlayerQuestStage } from '../types/PlayerQuestStage';
 	import type { AgentSelection } from '../types/AgentSelection';
+	import { onMount } from 'svelte';
+	import type { StageSelection } from '../types/StageSelection';
+	import type { Quest } from '../types/Quest';
 
 	let playerBeingReset: PlayerQuestStage | undefined = undefined;
 	let resetModalOpen = false;
@@ -25,7 +29,20 @@
 	let selectedPlayers: AgentSelection[] = [];
 	let sensorId = '';
 	let questId = '';
-	let stageId = '';
+	let stageId: StageSelection | undefined = undefined;
+	let allQuestIds: string[] = [];
+	let allStageIds: StageSelection[] = [];
+	let allQuests: Quest[] = [];
+
+	$: allStageIds = allQuests.filter(q => !questId || q.id === questId).flatMap(q => q.stages.map((s, idx) => ({ index: idx + 1, playlistName: `${idx + 1}: ${s.playlistName}` })));
+
+	onMount(async () => {
+		let quests = await getAllQuests();
+		if(quests) {
+			allQuests = quests;
+			allQuestIds = allQuests.map(q => q.id);
+		}
+	});
 
 	players.subscribe((allPlayers) => {
 		for (const player of allPlayers) {
@@ -297,18 +314,19 @@
 	<Modal isOpen={setStageModalOpen}>
 		<ModalHeader>Stufe setzen</ModalHeader>
 		<ModalBody>
-			<label>
-				Quest-ID
-				<input bind:value={questId} placeholder="Quest-ID" />
-			</label>
-			<label>	
-				Stage-ID
-				<input bind:value={stageId} placeholder="Stage-ID" />
-			</label>
+			<FormGroup>	
+				<label for="quest-selection">Quest-ID</label>
+				<AutoComplete id="quest-selection" items="{allQuestIds}" bind:selectedItem="{questId}" />
+			</FormGroup>
+			<FormGroup>
+				<label for="stage-selection">Stage-ID</label>
+				<AutoComplete disabled={!questId} id="stage-selection" items="{allStageIds}" bind:selectedItem="{stageId}" 
+				labelFieldName='playlistName' />
+			</FormGroup>
 		</ModalBody>
 		<ModalFooter>
 			{#if !processing}
-				<Button color="primary" disabled={!sensorId} on:click={doSetStage}>OK</Button>
+				<Button color="primary" disabled={!questId || !stageId} on:click={doSetStage}>OK</Button>
 				<Button color="info" on:click={closeSetStageModal}>Abbrechen</Button>
 			{:else}
 				<Spinner />

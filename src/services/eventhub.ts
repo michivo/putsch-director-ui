@@ -64,4 +64,20 @@ async function getAllQuests() {
 	return data;
   }
 
+async function setStage(playerIds: string[], questId: string, stageIndex: number) {
+	const requestBody = playerIds.map(p => ({
+		playerId: p,
+		questId,
+		stageIndex,
+	}));
+
+	await fetch('https://putsch-event-hub.uc.r.appspot.com/api/v1/currentStage', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify(requestBody)
+	});
+}
+
 export { resetPlayer, triggerEvent, startQuestForPlayer, triggerEventsBatch, getAllQuests };

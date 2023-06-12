@@ -20,5 +20,5 @@ export interface QuestStage {
     text: string,
     backupTimeSeconds: number,
     backupTextId: string,
+    playlistName: string,
 }
-
