@@ -11,7 +11,13 @@
 		Table
 	} from 'sveltestrap';
 	import AutoComplete from 'simple-svelte-autocomplete';
-	import { getAllQuests, resetPlayer, startQuestForPlayer, triggerEventsBatch } from '../services/eventhub';
+	import {
+		getAllQuests,
+		resetPlayer,
+		setCurrentStage,
+		startQuestForPlayer,
+		triggerEventsBatch
+	} from '../services/eventhub';
 	import { players } from '../stores/players';
 	import type { PlayerQuestStage } from '../types/PlayerQuestStage';
 	import type { AgentSelection } from '../types/AgentSelection';
@@ -34,19 +40,27 @@
 	let allStageIds: StageSelection[] = [];
 	let allQuests: Quest[] = [];
 
-	$: allStageIds = allQuests.filter(q => !questId || q.id === questId).flatMap(q => q.stages.map((s, idx) => ({ index: idx + 1, playlistName: `${idx + 1}: ${s.playlistName}` })));
+	$: allStageIds = allQuests
+		.filter((q) => !questId || q.id === questId)
+		.flatMap((q) =>
+			q.stages.map((s, idx) => ({ index: idx + 1, playlistName: `${idx + 1}: ${s.playlistName}` }))
+		);
 
 	onMount(async () => {
 		let quests = await getAllQuests();
-		if(quests) {
+		if (quests) {
 			allQuests = quests;
-			allQuestIds = allQuests.map(q => q.id);
+			allQuestIds = allQuests.map((q) => q.id);
 		}
 	});
 
 	players.subscribe((allPlayers) => {
 		for (const player of allPlayers) {
-			if (!selectedPlayers.find((p) => p.player.playerId === player.playerId) && player.playerId && player.playerId.startsWith('P')) {
+			if (
+				!selectedPlayers.find((p) => p.player.playerId === player.playerId) &&
+				player.playerId &&
+				player.playerId.startsWith('P')
+			) {
 				selectedPlayers.push({
 					player: player,
 					active: false
@@ -109,10 +123,7 @@
 		processing = true;
 		try {
 			for (const player of selectedPlayers.filter((p) => p.active)) {
-				await startQuestForPlayer(
-					player.player.playerId,
-					questId,
-				);
+				await startQuestForPlayer(player.player.playerId, questId);
 			}
 		} finally {
 			processing = false;
@@ -152,10 +163,13 @@
 	const doSetStage = async () => {
 		processing = true;
 		try {
-			await triggerEventsBatch(
-				sensorId,
-				selectedPlayers.filter((p) => p.active).map((p) => p.player.playerId)
-			);
+			if (questId && stageId) {
+				await setCurrentStage(
+					selectedPlayers.filter((p) => p.active).map((p) => p.player.playerId),
+					questId,
+					stageId.index
+				);
+			}
 		} finally {
 			processing = false;
 			setStageModalOpen = false;
@@ -219,7 +233,11 @@
 					<td>{getStageIndexLabel(player)}</td>
 					<td class="quests-complete">{player.questsComplete ?? []}</td>
 					<td>
-						<Button class="p-0 m-0" title="Zurücksetzen" on:click={() => openResetPlayerModal(player)}>
+						<Button
+							class="p-0 m-0"
+							title="Zurücksetzen"
+							on:click={() => openResetPlayerModal(player)}
+						>
 							<Icon style="color:var(--bs-red)" name="person-x" class="putsch-action-button" />
 						</Button>
 					</td>
@@ -314,14 +332,19 @@
 	<Modal isOpen={setStageModalOpen}>
 		<ModalHeader>Stufe setzen</ModalHeader>
 		<ModalBody>
-			<FormGroup>	
+			<FormGroup>
 				<label for="quest-selection">Quest-ID</label>
-				<AutoComplete id="quest-selection" items="{allQuestIds}" bind:selectedItem="{questId}" />
+				<AutoComplete id="quest-selection" items={allQuestIds} bind:selectedItem={questId} />
 			</FormGroup>
 			<FormGroup>
 				<label for="stage-selection">Stage-ID</label>
-				<AutoComplete disabled={!questId} id="stage-selection" items="{allStageIds}" bind:selectedItem="{stageId}" 
-				labelFieldName='playlistName' />
+				<AutoComplete
+					disabled={!questId}
+					id="stage-selection"
+					items={allStageIds}
+					bind:selectedItem={stageId}
+					labelFieldName="playlistName"
+				/>
 			</FormGroup>
 		</ModalBody>
 		<ModalFooter>

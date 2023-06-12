@@ -64,7 +64,7 @@ async function getAllQuests() {
 	return data;
   }
 
-async function setStage(playerIds: string[], questId: string, stageIndex: number) {
+async function setCurrentStage(playerIds: string[], questId: string, stageIndex: number) {
 	const requestBody = playerIds.map(p => ({
 		playerId: p,
 		questId,
@@ -80,4 +80,4 @@ async function setStage(playerIds: string[], questId: string, stageIndex: number
 	});
 }
 
-export { resetPlayer, triggerEvent, startQuestForPlayer, triggerEventsBatch, getAllQuests };
+export { resetPlayer, triggerEvent, startQuestForPlayer, triggerEventsBatch, getAllQuests, setCurrentStage };
