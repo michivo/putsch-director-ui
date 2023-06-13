@@ -258,9 +258,4 @@
 	:global(.putsch-action-button) {
 		font-size: 1.25rem;
 	}
-
-	.table-sm tr > td {
-		padding-top: 0;
-		padding-bottom: 0;
-	}
 </style>

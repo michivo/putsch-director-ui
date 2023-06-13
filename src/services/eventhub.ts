@@ -66,7 +66,7 @@ async function getAllQuests() {
 
 async function setCurrentStage(playerIds: string[], questId: string, stageIndex: number) {
 	const requestBody = {
-		playerId: playerIds,
+		playerIds,
 		questId,
 		stageIndex,
 	};

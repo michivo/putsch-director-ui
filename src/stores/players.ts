@@ -21,6 +21,7 @@ export async function initPlayerStore() {
                 item.feedbackCount = currentPlayer.feedbackCount;
             }
         });
+        addDummyPlayers(newPlayerData);
         currentPlayers = newPlayerData.sort(comparePlayers);
         players.set(currentPlayers);
     });
@@ -61,24 +62,28 @@ export async function initPlayerStore() {
                 newPlayerData.push(currentPlayer);
             }
         }
-        for(let playerCount = 1; playerCount <= 30; playerCount++) {
-            const playerId = `P${playerCount.toString(10).padStart(2, '0')}`;
-            const existingPlayer = currentPlayers.find(p => p.playerId === playerId);
-            if(!existingPlayer) {
-                currentPlayers.push(createDummyPlayer(playerId));
-            }
-        }
-        for(let radioCount = 1; radioCount <= 20; radioCount++) {
-            const playerId = `R${radioCount.toString(10).padStart(2, '0')}`;
-            const existingPlayer = currentPlayers.find(p => p.playerId === playerId);
-            if(!existingPlayer) {
-                currentPlayers.push(createDummyPlayer(playerId));
-            }
-        }
+        addDummyPlayers(newPlayerData);
 
         currentPlayers = newPlayerData.sort(comparePlayers);
         players.set(currentPlayers);
     });
+}
+
+function addDummyPlayers(newPlayerData: PlayerQuestStage[]) {
+    for(let playerCount = 1; playerCount <= 30; playerCount++) {
+        const playerId = `P${playerCount.toString(10)}`;
+        const existingPlayer = newPlayerData.find(p => p.playerId === playerId);
+        if(!existingPlayer) {
+            newPlayerData.push(createDummyPlayer(playerId));
+        }
+    }
+    for(let radioCount = 1; radioCount <= 20; radioCount++) {
+        const playerId = `R${radioCount.toString(10)}`;
+        const existingPlayer = newPlayerData.find(p => p.playerId === playerId);
+        if(!existingPlayer) {
+            newPlayerData.push(createDummyPlayer(playerId));
+        }
+    }
 }
 
 function createDummyPlayer(playerId: string) {

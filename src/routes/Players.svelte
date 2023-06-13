@@ -43,7 +43,7 @@
 	$: allStageIds = allQuests
 		.filter((q) => !questId || q.id === questId)
 		.flatMap((q) =>
-			q.stages.map((s, idx) => ({ index: idx + 1, playlistName: `${idx + 1}: ${s.playlistName}` }))
+			q.stages.map((_, idx) => ({ index: idx, playlistName: `${idx}: ${idx === 0 ? '' : q.stages[idx - 1].playlistName}` }))
 		);
 
 	onMount(async () => {
@@ -153,6 +153,10 @@
 	};
 
 	const setStage = () => {
+		const firstActivePlayer = selectedPlayers.find(p => p.active);
+		if(firstActivePlayer) {
+			questId = firstActivePlayer.player.questId;
+		}
 		setStageModalOpen = true;
 	};
 
@@ -167,7 +171,7 @@
 				await setCurrentStage(
 					selectedPlayers.filter((p) => p.active).map((p) => p.player.playerId),
 					questId,
-					stageId.index - 1
+					stageId.index
 				);
 			}
 		} finally {
