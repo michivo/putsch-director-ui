@@ -44,7 +44,8 @@
 		'R18',
 		'R19',
 		'R20',
-		'R21'
+		'R21',
+		'R22',
 	];
 	let selectedRadios: AgentSelection[] = [];
 	let allQuests = [] as Quest[];
